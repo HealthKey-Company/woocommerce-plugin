@@ -16,10 +16,10 @@ Give your customers the option to pay with HealthKey . The "HealthKey Gateway fo
 
 This section outlines the steps to install the HealthKey plugin.
 
-1. Go to https://github.com/Goodbody-Wellness/Healthkey-Payments-For-Woocommerce
+1. Go to https://github.com/HealthKey-Company/woocommerce-plugin
 2. Click on Code, download Zip
 3. Go to the WP-Admin section of your Wordpress site
-4. Go o the plugin section
+4. Go to the plugin section
 5. Add New
 6. Upload Plugin
 7. Choose the downloaded zip file and upload
