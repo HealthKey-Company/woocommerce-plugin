@@ -3,8 +3,6 @@ use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodTyp
 
 final class WC_Healthkey_Blocks_Support extends AbstractPaymentMethodType {
 
-	private $gateway;
-
     /**
 	 * Payment method name defined by payment methods extending this class.
 	 *
@@ -13,7 +11,6 @@ final class WC_Healthkey_Blocks_Support extends AbstractPaymentMethodType {
 	protected $name = 'healthkey_payment';
 
     public function initialize() {
-		$this->gateway = new WC_Healthkey_pay_Gateway();
     }
 
     public function is_active() {
@@ -38,14 +35,12 @@ final class WC_Healthkey_Blocks_Support extends AbstractPaymentMethodType {
             null,
             true
         );
-        // if( function_exists( 'wp_set_script_translations' ) ) {            
-        //     wp_set_script_translations( 'healthkey_gateway-blocks-integration');
-            
-        // }
+
         return [ 'healthkey_gateway-blocks-integration' ];
 	}
 
     public function get_payment_method_data() {
-        return ['supports'    => $this->get_supported_features()];
+        return ['supports' => $this->get_supported_features(),
+                'icon' => plugins_url( 'assets/icon.png', __FILE__ )];
     }
 }
