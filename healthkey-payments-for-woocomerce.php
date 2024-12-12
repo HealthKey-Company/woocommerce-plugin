@@ -311,7 +311,7 @@ function healthkey_payment_init()
                 $this->method_title = __('HealthKey Payment', 'healthkey-pay-woo');
                 $this->method_description = __('Pay with HealthKey membership', 'healthkey-pay-woo');
  
-                $this->title = $this->get_option('title');
+                $this->title = 'Pay with HealthKey';
                 $this->description = $this->get_option('description');
                 $this->instructions = $this->get_option('instructions', $this->description);
                 $this->hk_client_id = $this->get_option('CLIENT_ID');
@@ -341,6 +341,20 @@ function healthkey_payment_init()
                         'type' => 'checkbox',
                         'label' => __('Enable HealthKey', 'healthkey-pay-woo'),
                         'default' => 'no'
+                    ],
+                    'title' => [
+                        'title' => __('Title', 'healthkey-pay-woo'),
+                        'type' => 'text',
+                        'default' => __('HealthKey', 'healthkey-pay-woo'),
+                        'desc_tip' => true,
+                        'description' => __('Add a new title for the healthkey Payments Gateway that customers will see when they are in the checkout page.', 'healthkey-pay-woo')
+                    ],
+                    'description' => [
+                        'title' => __('Description', 'healthkey-pay-woo'),
+                        'type' => 'textarea',
+                        'default' => __('This will Log you in to your HealthKey account to complete the payment', 'healthkey-pay-woo'),
+                        'desc_tip' => true,
+                        'description' => __('add a description to the payment option.', 'healthkey-pay-woo')
                     ],
                     'CLIENT_ID' => [
                         'title' => __('CLIENT_ID', 'healthkey-pay-woo'),
@@ -456,6 +470,8 @@ function healthkey_payment_init()
                 $sha256 = hash("sha256", $code_verifier, true);
                 return str_replace(['+', '/', '='], ['-', '_', ''] , base64_encode($sha256));
             } 
+
+    
         }
     }
 }
