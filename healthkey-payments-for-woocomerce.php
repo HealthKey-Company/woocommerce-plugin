@@ -311,7 +311,7 @@ function healthkey_payment_init()
                 $this->method_title = __('HealthKey Payment', 'healthkey-pay-woo');
                 $this->method_description = __('Pay with HealthKey membership', 'healthkey-pay-woo');
  
-                $this->title = 'Pay with HealthKey';
+                $this->title = $this->get_option('title');
                 $this->description = $this->get_option('description');
                 $this->instructions = $this->get_option('instructions', $this->description);
                 $this->hk_client_id = $this->get_option('CLIENT_ID');
@@ -345,7 +345,7 @@ function healthkey_payment_init()
                     'title' => [
                         'title' => __('Title', 'healthkey-pay-woo'),
                         'type' => 'text',
-                        'default' => __('HealthKey', 'healthkey-pay-woo'),
+                        'default' => __('Pay with HealthKey', 'healthkey-pay-woo'),
                         'desc_tip' => true,
                         'description' => __('Add a new title for the healthkey Payments Gateway that customers will see when they are in the checkout page.', 'healthkey-pay-woo')
                     ],
