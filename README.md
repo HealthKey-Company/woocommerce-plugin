@@ -16,7 +16,7 @@ Give your customers the option to pay with HealthKey . The "HealthKey Gateway fo
 
 This plugin supports both the new Checkout Block and the Classic Checkout block.
 
-== Installation ==
+== End User Installation ==
 
 This section outlines the steps to install the HealthKey plugin.
 
@@ -34,3 +34,11 @@ This section outlines the steps to install the HealthKey plugin.
 12. Enter the CLIENT_ID, CLIENT_SECRET, AUTH_HOSTNAME and SERVER_API_HOSTNAME that were provided by HealthKey for Production use.
 13. Tick Enable HealthKey.
 14. Save changes.
+
+== Plugin Development ==
+
+1. Run `npm install`
+2. Clone Woocommerce https://github.com/woocommerce/woocommerce
+3. Ensure `.wp-env.json` points to the woocommerce plugin you have locally
+4. To start the wordpress environment run `npx wp-env start`
+5. Run `npm start` to continuously rebuild changes to the block
