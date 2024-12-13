@@ -1,10 +1,9 @@
 <?php
-
 /**
  * Plugin Name: HealthKey Payment for Woocommerce
- * Plugin URI: https://health.goodbodyclinic.com
- * Author Name: Fabrice Gagneux
- * Author URI: https://health.goodbodyclinic.com
+ * Plugin URI: https://github.com/HealthKey-Company/woocommerce-plugin
+ * Author Name: Fabrice Gagneux & HealthKey
+ * Author URI: https://health.goodbodyclinic.com & https://www.healthkey.health/
  * Description: This plugin allows for payments with HealthKey.
  * Version: 0.1.0
  * Requires Plugins: woocommerce
@@ -13,6 +12,10 @@
  * text-domain: healthkey-pay-woo
  * WC tested up to: 9.0
 */ 
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit; // Exit if accessed directly
+}
 
 if (!in_array('woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' )))) {
     return;
