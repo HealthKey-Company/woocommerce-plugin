@@ -1,4 +1,5 @@
-=== HealthKey Gateway for WooCommerce ===
+# HealthKey Gateway for WooCommerce
+
 Contributors: Goodbody Wellness
 Tags: woocommerce, HealthKey
 Requires at least: 4.8.3
@@ -8,7 +9,7 @@ License: MIT License
 
 Provide HealthKey as a payment option for WooCommerce orders.
 
-== Description ==
+## Description
 
 This plugin is for health care providers on the HealthKey platform. If you would like to find out more about joining HealthKey visit [our website](https://www.healthkey.health/industry/providers)
 
@@ -16,7 +17,13 @@ Give your customers the option to pay with HealthKey . The "HealthKey Gateway fo
 
 This plugin supports both the new Checkout Block and the Classic Checkout block.
 
-== End User Installation ==
+## End User Installation
+
+### Prerequisites
+
+This plugin relies on `wp-json` as it appends routes to the rest API. For this to be active the Permalink setting for the Wordpress installation must not be Plain. There are [instructions for how to change this setting](https://stackoverflow.com/a/53929736). Failure to do so will lead to errors when going through the checkout flow. If you cannot change this setting reach out to HealthKey.
+
+### Installation
 
 This section outlines the steps to install the HealthKey plugin.
 
@@ -35,7 +42,7 @@ This section outlines the steps to install the HealthKey plugin.
 13. Tick Enable HealthKey.
 14. Save changes.
 
-== Plugin Development ==
+## Plugin Development
 
 1. Run `npm install`
 2. Clone Woocommerce https://github.com/woocommerce/woocommerce
