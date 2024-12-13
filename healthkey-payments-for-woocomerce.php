@@ -1,16 +1,21 @@
 <?php
-
 /**
  * Plugin Name: HealthKey Payment for Woocommerce
- * Plugin URI: https://health.goodbodyclinic.com
- * Author Name: Fabrice Gagneux
- * Author URI: https://health.goodbodyclinic.com
+ * Plugin URI: https://github.com/HealthKey-Company/woocommerce-plugin
+ * Author Name: Fabrice Gagneux & HealthKey
+ * Author URI: https://health.goodbodyclinic.com & https://www.healthkey.health/
  * Description: This plugin allows for payments with HealthKey.
  * Version: 0.1.0
+ * Requires Plugins: woocommerce
  * License: 0.1.0
  * License URL: http://www.gnu.org/licenses/gpl-2.0.txt
  * text-domain: healthkey-pay-woo
+ * WC tested up to: 9.0
 */ 
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit; // Exit if accessed directly
+}
 
 if (!in_array('woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' )))) {
     return;
@@ -343,7 +348,7 @@ function healthkey_payment_init()
                     'title' => [
                         'title' => __('Title', 'healthkey-pay-woo'),
                         'type' => 'text',
-                        'default' => __('HealthKey', 'healthkey-pay-woo'),
+                        'default' => __('Pay with HealthKey', 'healthkey-pay-woo'),
                         'desc_tip' => true,
                         'description' => __('Add a new title for the healthkey Payments Gateway that customers will see when they are in the checkout page.', 'healthkey-pay-woo')
                     ],
@@ -468,6 +473,8 @@ function healthkey_payment_init()
                 $sha256 = hash("sha256", $code_verifier, true);
                 return str_replace(['+', '/', '='], ['-', '_', ''] , base64_encode($sha256));
             } 
+
+    
         }
     }
 }
@@ -484,3 +491,21 @@ function add_to_woo_healthkey_payment_gateway($gateways)
     $gateways[] = 'WC_Healthkey_pay_Gateway';
     return $gateways;
 }
+
+use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
+
+add_action( 'woocommerce_blocks_loaded', 'healthkey_woocommerce_blocks_support' );
+
+function healthkey_woocommerce_blocks_support() {
+    require_once dirname( __FILE__ ) . '/class-wc-healthkey-blocks-support.php';
+    add_action(
+      'woocommerce_blocks_payment_method_type_registration',
+      function( PaymentMethodRegistry $payment_method_registry ) {
+        $payment_method_registry->register( new WC_Healthkey_Blocks_Support );
+      }
+    );
+}
+
+add_action( 'before_woocommerce_init', function() {
+    \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'cart_checkout_blocks', __FILE__, true );
+} );

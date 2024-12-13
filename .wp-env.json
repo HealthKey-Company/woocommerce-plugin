@@ -1,0 +1,7 @@
+{
+    "core": "WordPress/WordPress#master",
+    "plugins": [
+        "../woocommerce/plugins/woocommerce",
+        "."
+    ]
+}
