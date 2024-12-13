@@ -40,9 +40,7 @@ const paymentRequestPaymentMethod = {
     description: "Pay via Healthkey",
     gatewayId: "healthkey_payment",
     content: Content,
-    edit: <>
-        <h2>Pay with Healthkey</h2>
-    </>,
+    edit: Content,
     canMakePayment: () => true,
     paymentMethodId: "healthkey_payment",
     supports: {
