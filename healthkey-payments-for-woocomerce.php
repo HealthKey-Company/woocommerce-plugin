@@ -178,6 +178,23 @@ function requestPayment($access_token, $order)
             "currency"      => "GBP",
             "quantity"      => $item->get_quantity(),
         ];
+
+        $product = $item->get_product();
+        if ( class_exists( 'WC_Subscriptions_Product' ) && WC_Subscriptions_Product::is_subscription( $product )  ) {
+            $subscription_period = WC_Subscriptions_Product::get_period($product);
+            $subscription_interval = WC_Subscriptions_Product::get_interval($product);
+            $subscription_length = WC_Subscriptions_Product::get_length($product);
+            $frequency = map_subscription_period_and_interval_to_hk($subscription_period, $subscription_interval);
+            // print_r($frequency);
+            $starting_date = date("Y-m-d");
+            $productIndex = count($products) - 1;
+            $products[$productIndex]["subscription"] = [
+                "frequency" => $frequency["frequency"],
+                "frequencyUnit" => $frequency["frequencyUnit"],
+                "startingDate" => $starting_date,
+            ];
+        }
+
     }
     if ($order->get_shipping_total() > 0) {
         $products[] = [
@@ -189,6 +206,8 @@ function requestPayment($access_token, $order)
             "quantity"      => 1,
         ];
     }
+
+    // print_r($products);
 
     $successUrl = $order->get_checkout_order_received_url();
 
@@ -204,6 +223,31 @@ function requestPayment($access_token, $order)
     curl_close($ch);
 
     return json_decode($response);
+}
+
+function map_subscription_period_and_interval_to_hk($woo_commerce_subscription_period, $woo_commerce_subscription_interval) {
+    switch($woo_commerce_subscription_period) {
+        case "month": 
+            return [
+                "frequency" => $woo_commerce_subscription_interval,
+                "frequencyUnit" => "months"
+            ];
+        case "day":
+            return [
+                "frequency" => $woo_commerce_subscription_interval,
+                "frequencyUnit" => "days"
+            ];
+        case "year":
+            return [
+                "frequency" => $woo_commerce_subscription_interval,
+                "frequencyUnit" => "years"
+            ];
+        case "week":
+            return [
+                "frequency" =>  $woo_commerce_subscription_interval * 7,
+                "frequencyUnit" => "days"
+            ];
+    }
 }
 
 /**
@@ -308,6 +352,7 @@ function healthkey_payment_init()
              */
             public function __construct()
             {
+                $this->supports =  array( 'subscriptions'); //TODO: Add features we support here
                 $this->id   = 'healthkey_payment';
                 $this->icon = apply_filters('woocommerce_healthkey_icon', plugins_url('/assets/icon.png', __FILE__ ));
                 $this->has_fields = false;
