@@ -39,6 +39,14 @@ add_action('rest_api_init', function () {
       ]);
 });
 
+add_action('rest_api_init', function () {
+    register_rest_route('healthkey', '/orders/subscription_termination_endpoint', [
+        'methods' => 'post',
+        'callback' => 'processSubscriptionTermination',
+        'permission_callback' => '__return_true'
+      ]);
+});
+
 /**
  * wp api function to process the payment from HealthKey
  * 
@@ -122,6 +130,41 @@ function processTransaction(WP_REST_Request $request)
         wp_redirect($url);
         exit();
     }
+}
+
+
+/**
+ * Handle a custom 'hk_transaction_id' query var to get orders with the 'hk_transaction_id' meta.
+ * @param array $query - Args for WP_Query.
+ * @param array $query_vars - Query vars from WC_Order_Query.
+ * @return array modified $query
+ */
+function handle_hk_transaction_id_var( $query, $query_vars ) {
+	if ( ! empty( $query_vars['hk_transaction_id'] ) ) {
+		$query['meta_query'][] = array(
+			'key' => 'hk_transaction_id',
+			'value' => esc_attr( $query_vars['hk_transaction_id'] ),
+		);
+	}
+
+	return $query;
+}
+add_filter( 'woocommerce_order_data_store_cpt_get_orders_query', 'handle_hk_transaction_id_var', 10, 2 );
+
+/**
+ * wp api function to process the payment from HealthKey
+ * 
+ * @param WP_REST_Request $request
+ * @return wp_redirect
+ */
+function processSubscriptionTermination(WP_REST_Request $request) {
+    $transaction_id = $request[''];
+    $args = array(
+        'hk_transaction_id' => 'HK-21',
+    );
+    $orders = wc_get_orders( $args );
+    print_r($orders);
+    // WC_Subscriptions_Manager::process_subscription_payment_failure_on_order()
 }
 
 
@@ -352,7 +395,7 @@ function healthkey_payment_init()
              */
             public function __construct()
             {
-                $this->supports =  array( 'subscriptions'); //TODO: Add features we support here
+                $this->supports =  array( 'subscriptions', 'gateway_scheduled_payments'); //TODO: Add features we support here
                 $this->id   = 'healthkey_payment';
                 $this->icon = apply_filters('woocommerce_healthkey_icon', plugins_url('/assets/icon.png', __FILE__ ));
                 $this->has_fields = false;
