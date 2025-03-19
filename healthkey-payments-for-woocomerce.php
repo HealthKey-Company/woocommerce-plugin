@@ -158,13 +158,28 @@ add_filter( 'woocommerce_order_data_store_cpt_get_orders_query', 'handle_hk_tran
  * @return wp_redirect
  */
 function processSubscriptionTermination(WP_REST_Request $request) {
-    $transaction_id = $request[''];
+    $transaction_id = $request['transactionId'];
+    $product_id = $request['productExternalId'];
+
+    print_r($transaction_id);
     $args = array(
-        'hk_transaction_id' => 'HK-21',
+        'meta_key' => 'hk_transaction_id',
+        'meta_value' => $transaction_id,
+        'meta_compare'  => '='
     );
     $orders = wc_get_orders( $args );
-    print_r($orders);
-    // WC_Subscriptions_Manager::process_subscription_payment_failure_on_order()
+
+    if(count($orders) < 1) {
+        return new WP_Error( 'no_order_found_for_transaction_id', 'No order was found with transaction id', array( 'status' => 404 ) );
+    }
+
+    if(count($orders) > 1) {
+        return new WP_Error( 'multiple_orders_found_for_transaction_id', 'Multiple orders were found with transaction id', array( 'status' => 500 ) );
+    }
+
+
+    WC_Subscriptions_Manager::process_subscription_payment_failure_on_order($orders[0], $product_id);
+    return new WP_REST_Response(null, 200); ;
 }
 
 
