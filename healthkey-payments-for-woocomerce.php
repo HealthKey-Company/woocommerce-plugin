@@ -157,11 +157,10 @@ add_filter( 'woocommerce_order_data_store_cpt_get_orders_query', 'handle_hk_tran
  * @param WP_REST_Request $request
  * @return wp_redirect
  */
-function processSubscriptionTermination(WP_REST_Request $request) {
+function processSubscriptionTermination(WP_REST_Request $request) {    
     $transaction_id = $request['transactionId'];
     $product_id = $request['productExternalId'];
 
-    print_r($transaction_id);
     $args = array(
         'meta_key' => 'hk_transaction_id',
         'meta_value' => $transaction_id,
@@ -178,7 +177,7 @@ function processSubscriptionTermination(WP_REST_Request $request) {
     }
 
 
-    WC_Subscriptions_Manager::process_subscription_payment_failure_on_order($orders[0], $product_id);
+    WC_Subscriptions_Manager::expire_subscriptions_for_order($orders[0]);
     return new WP_REST_Response(null, 200); ;
 }
 
@@ -228,9 +227,20 @@ function requestPayment($access_token, $order)
 
     $products = [];
     foreach ( $order->get_items() as $item_id => $item ) {
+
+        $externalId = NULL;
+        $variationId = $item->get_variation_id();
+        $productId = $item->get_product_id();
+    
+        if ((is_string($variationId) && strlen($variationId) > 0) || is_numeric($variationId)) {
+            $externalId = $variationId;
+        } else {
+            $externalId = $productId;
+        }
+
         $products[] = [
             "name"          => $item->get_name(),
-            "externalId"    => $healthkey_settings['product_prefix'] . "-" . $item->get_product_id(),
+            "externalId"    => $healthkey_settings['product_prefix'] . "-" . $externalId,
             "description"   => $item->get_name(),
             "price"         => $item->get_total() / $item->get_quantity(), //unit price
             "currency"      => "GBP",
