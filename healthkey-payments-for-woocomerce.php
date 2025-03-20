@@ -251,7 +251,7 @@ function requestPayment($access_token, $order)
         if ( class_exists( 'WC_Subscriptions_Product' ) && WC_Subscriptions_Product::is_subscription( $product )  ) {
             $subscription_period = WC_Subscriptions_Product::get_period($product);
             $subscription_interval = WC_Subscriptions_Product::get_interval($product);
-            $subscription_length = WC_Subscriptions_Product::get_length($product);
+            // $subscription_length = WC_Subscriptions_Product::get_length($product); // We don't currently support subscriptions of a pre-determined length
             $frequency = map_subscription_period_and_interval_to_hk($subscription_period, $subscription_interval);
             // print_r($frequency);
             $starting_date = date("Y-m-d");
@@ -637,6 +637,11 @@ function disable_hk_payment_for_unsupported_subscriptions( $available_gateways )
        if ( class_exists( 'WC_Subscriptions_Product' ) && WC_Subscriptions_Product::is_subscription( $product )  ) {
         $subscripton_product_count += 1;
         if($cart_item['quantity'] != 1) {
+            $supported_cart = False;
+        }
+
+        $subscription_length = WC_Subscriptions_Product::get_length($product);
+        if($subscription_length != 0) {
             $supported_cart = False;
         }
        }
