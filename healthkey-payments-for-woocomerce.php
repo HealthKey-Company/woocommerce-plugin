@@ -114,6 +114,11 @@ function processTransaction(WP_REST_Request $request)
     $order = wc_get_order( $_SESSION['hk_order_id'] );
 
     $payment_response = requestPayment($access_token, $order);
+
+    if(is_null($payment_response) || !isset($payment_response->status) || !is_string( $payment_response->status) || !is_string($payment_response->id)) {
+        wp_redirect( wc_get_checkout_url() );
+        exit();
+    }
     
     $transaction_status = $payment_response->status;
     $transaction_id = $payment_response->id;
