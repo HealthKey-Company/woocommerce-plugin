@@ -622,3 +622,33 @@ function healthkey_woocommerce_blocks_support() {
 add_action( 'before_woocommerce_init', function() {
     \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'cart_checkout_blocks', __FILE__, true );
 } );
+
+add_filter( 'woocommerce_available_payment_gateways', 'disable_hk_payment_for_unsupported_subscriptions' );
+
+
+// The HealthKey data model allows you to cancel a single item from a subscription but we currently have no way to cancel a single item from a WooCommerce subscription. 
+// So we hide the option to way with HealthKey for these unsupported carts -- LH, 2025-03-20 
+function disable_hk_payment_for_unsupported_subscriptions( $available_gateways ) {
+    if ( ! WC()->cart ) return $available_gateways;
+    $supported_cart = True;
+    $subscripton_product_count = 0;
+    foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
+       $product =  wc_get_product( $cart_item['data']->get_id()); 
+       if ( class_exists( 'WC_Subscriptions_Product' ) && WC_Subscriptions_Product::is_subscription( $product )  ) {
+        $subscripton_product_count += 1;
+        if($cart_item['quantity'] != 1) {
+            $supported_cart = False;
+        }
+       }
+    }
+
+    if($subscripton_product_count > 1) {
+        $supported_cart = False;
+    }
+
+
+    if ( !$supported_cart ) {
+       unset( $available_gateways['healthkey_payment'] );
+    }
+    return $available_gateways;
+ }
