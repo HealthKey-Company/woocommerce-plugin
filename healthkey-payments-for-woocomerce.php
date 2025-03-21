@@ -323,6 +323,10 @@ function map_subscription_period_and_interval_to_hk($woo_commerce_subscription_p
     }
 }
 
+function map_trial_to_hk() {
+
+}
+
 /**
  * intitialise Woocommerce integration
  * 
@@ -645,7 +649,11 @@ function disable_hk_payment_for_unsupported_subscriptions( $available_gateways )
             $supported_cart = False;
         }
 
-        $subscription_length = WC_Subscriptions_Product::get_length($product);
+        $has_trial_period   = WC_Subscriptions_Product::get_trial_length( $product ) > 0;
+        if($has_trial_period) {
+            $supported_cart = False;
+        }
+
        }
     }
 
