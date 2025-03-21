@@ -658,6 +658,11 @@ function disable_hk_payment_for_unsupported_subscriptions( $available_gateways )
             $supported_cart = False;
         }
 
+        $sign_up_fee_due  = WC_Subscriptions_Product::get_sign_up_fee( $product );
+        if($sign_up_fee_due != 0) {
+            $supported_cart = False;
+        }
+
        }
     }
 
