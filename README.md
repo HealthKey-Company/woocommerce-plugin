@@ -44,7 +44,10 @@ This section outlines the steps to install the HealthKey plugin.
 
 ## End User Instructions
 
+### Subscriptions
+
 - We expect the interval of a subscription product with the same product id not to change. If you want to change the subscription interval of an existing product reach out to HealthKey to make this change.
+- We will charge shipping on the initial order but do not currently support charging shipping for subscriptions
 
 ## Plugin Development
 

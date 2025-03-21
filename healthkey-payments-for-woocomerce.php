@@ -646,9 +646,6 @@ function disable_hk_payment_for_unsupported_subscriptions( $available_gateways )
         }
 
         $subscription_length = WC_Subscriptions_Product::get_length($product);
-        if($subscription_length != 0) {
-            $supported_cart = False;
-        }
        }
     }
 
