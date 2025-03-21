@@ -5,7 +5,7 @@
  * Author Name: Fabrice Gagneux & HealthKey
  * Author URI: https://health.goodbodyclinic.com & https://www.healthkey.health/
  * Description: This plugin allows for payments with HealthKey.
- * Version: 0.1.0
+ * Version: 0.2.0
  * Requires Plugins: woocommerce
  * License: 0.1.0
  * License URL: http://www.gnu.org/licenses/gpl-2.0.txt
