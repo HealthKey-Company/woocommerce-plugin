@@ -236,8 +236,9 @@ function requestPayment($access_token, $order)
         $externalId = NULL;
         $variationId = $item->get_variation_id();
         $productId = $item->get_product_id();
+
     
-        if ((is_string($variationId) && strlen($variationId) > 0) || is_numeric($variationId)) {
+        if ((is_string($variationId) && strlen($variationId) > 0) || (is_numeric($variationId) && $variationId > 0)) {
             $externalId = $variationId;
         } else {
             $externalId = $productId;
@@ -279,8 +280,6 @@ function requestPayment($access_token, $order)
             "quantity"      => 1,
         ];
     }
-
-    // print_r($products);
 
     $successUrl = $order->get_checkout_order_received_url();
 
@@ -429,7 +428,7 @@ function healthkey_payment_init()
              */
             public function __construct()
             {
-                $this->supports =  array( 'subscriptions', 'gateway_scheduled_payments'); //TODO: Add features we support here
+                $this->supports =  array( 'subscriptions', 'products', 'gateway_scheduled_payments'); //TODO: Add features we support here
                 $this->id   = 'healthkey_payment';
                 $this->icon = apply_filters('woocommerce_healthkey_icon', plugins_url('/assets/icon.png', __FILE__ ));
                 $this->has_fields = false;
