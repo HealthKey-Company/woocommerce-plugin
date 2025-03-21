@@ -321,10 +321,6 @@ function map_subscription_period_and_interval_to_hk($woo_commerce_subscription_p
     }
 }
 
-function map_trial_to_hk() {
-
-}
-
 /**
  * intitialise Woocommerce integration
  * 
