@@ -39,6 +39,14 @@ add_action('rest_api_init', function () {
       ]);
 });
 
+add_action('rest_api_init', function () {
+    register_rest_route('healthkey', '/orders/subscription_termination_endpoint', [
+        'methods' => 'post',
+        'callback' => 'processSubscriptionTermination',
+        'permission_callback' => '__return_true'
+      ]);
+});
+
 /**
  * wp api function to process the payment from HealthKey
  * 
@@ -106,6 +114,11 @@ function processTransaction(WP_REST_Request $request)
     $order = wc_get_order( $_SESSION['hk_order_id'] );
 
     $payment_response = requestPayment($access_token, $order);
+
+    if(is_null($payment_response) || !isset($payment_response->status) || !is_string( $payment_response->status) || !is_string($payment_response->id)) {
+        wp_redirect( wc_get_checkout_url() );
+        exit();
+    }
     
     $transaction_status = $payment_response->status;
     $transaction_id = $payment_response->id;
@@ -122,6 +135,55 @@ function processTransaction(WP_REST_Request $request)
         wp_redirect($url);
         exit();
     }
+}
+
+
+/**
+ * Handle a custom 'hk_transaction_id' query var to get orders with the 'hk_transaction_id' meta.
+ * @param array $query - Args for WP_Query.
+ * @param array $query_vars - Query vars from WC_Order_Query.
+ * @return array modified $query
+ */
+function handle_hk_transaction_id_var( $query, $query_vars ) {
+	if ( ! empty( $query_vars['hk_transaction_id'] ) ) {
+		$query['meta_query'][] = array(
+			'key' => 'hk_transaction_id',
+			'value' => esc_attr( $query_vars['hk_transaction_id'] ),
+		);
+	}
+
+	return $query;
+}
+add_filter( 'woocommerce_order_data_store_cpt_get_orders_query', 'handle_hk_transaction_id_var', 10, 2 );
+
+/**
+ * wp api function to process the payment from HealthKey
+ * 
+ * @param WP_REST_Request $request
+ * @return wp_redirect
+ */
+function processSubscriptionTermination(WP_REST_Request $request) {    
+    $transaction_id = $request['transactionId'];
+    $product_id = $request['productExternalId'];
+
+    $args = array(
+        'meta_key' => 'hk_transaction_id',
+        'meta_value' => $transaction_id,
+        'meta_compare'  => '='
+    );
+    $orders = wc_get_orders( $args );
+
+    if(count($orders) < 1) {
+        return new WP_Error( 'no_order_found_for_transaction_id', 'No order was found with transaction id', array( 'status' => 404 ) );
+    }
+
+    if(count($orders) > 1) {
+        return new WP_Error( 'multiple_orders_found_for_transaction_id', 'Multiple orders were found with transaction id', array( 'status' => 500 ) );
+    }
+
+
+    WC_Subscriptions_Manager::expire_subscriptions_for_order($orders[0]);
+    return new WP_REST_Response(null, 200); ;
 }
 
 
@@ -170,14 +232,42 @@ function requestPayment($access_token, $order)
 
     $products = [];
     foreach ( $order->get_items() as $item_id => $item ) {
+
+        $externalId = NULL;
+        $variationId = $item->get_variation_id();
+        $productId = $item->get_product_id();
+
+    
+        if ((is_string($variationId) && strlen($variationId) > 0) || (is_numeric($variationId) && $variationId > 0)) {
+            $externalId = $variationId;
+        } else {
+            $externalId = $productId;
+        }
+
         $products[] = [
             "name"          => $item->get_name(),
-            "externalId"    => $healthkey_settings['product_prefix'] . "-" . $item->get_product_id(),
+            "externalId"    => $healthkey_settings['product_prefix'] . "-" . $externalId,
             "description"   => $item->get_name(),
             "price"         => $item->get_total() / $item->get_quantity(), //unit price
             "currency"      => "GBP",
             "quantity"      => $item->get_quantity(),
         ];
+
+        $product = $item->get_product();
+        if ( class_exists( 'WC_Subscriptions_Product' ) && WC_Subscriptions_Product::is_subscription( $product )  ) {
+            $subscription_period = WC_Subscriptions_Product::get_period($product);
+            $subscription_interval = WC_Subscriptions_Product::get_interval($product);
+            // $subscription_length = WC_Subscriptions_Product::get_length($product); // We don't currently support subscriptions of a pre-determined length
+            $frequency = map_subscription_period_and_interval_to_hk($subscription_period, $subscription_interval);
+            $starting_date = date("Y-m-d");
+            $productIndex = count($products) - 1;
+            $products[$productIndex]["subscription"] = [
+                "frequency" => $frequency["frequency"],
+                "frequencyUnit" => $frequency["frequencyUnit"],
+                "startingDate" => $starting_date,
+            ];
+        }
+
     }
     if ($order->get_shipping_total() > 0) {
         $products[] = [
@@ -204,6 +294,31 @@ function requestPayment($access_token, $order)
     curl_close($ch);
 
     return json_decode($response);
+}
+
+function map_subscription_period_and_interval_to_hk($woo_commerce_subscription_period, $woo_commerce_subscription_interval) {
+    switch($woo_commerce_subscription_period) {
+        case "month": 
+            return [
+                "frequency" => $woo_commerce_subscription_interval,
+                "frequencyUnit" => "months"
+            ];
+        case "day":
+            return [
+                "frequency" => $woo_commerce_subscription_interval,
+                "frequencyUnit" => "days"
+            ];
+        case "year":
+            return [
+                "frequency" => $woo_commerce_subscription_interval,
+                "frequencyUnit" => "years"
+            ];
+        case "week":
+            return [
+                "frequency" =>  $woo_commerce_subscription_interval * 7,
+                "frequencyUnit" => "days"
+            ];
+    }
 }
 
 /**
@@ -308,6 +423,7 @@ function healthkey_payment_init()
              */
             public function __construct()
             {
+                $this->supports =  array( 'subscriptions', 'products', 'gateway_scheduled_payments');
                 $this->id   = 'healthkey_payment';
                 $this->icon = apply_filters('woocommerce_healthkey_icon', plugins_url('/assets/icon.png', __FILE__ ));
                 $this->has_fields = false;
@@ -509,3 +625,49 @@ function healthkey_woocommerce_blocks_support() {
 add_action( 'before_woocommerce_init', function() {
     \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'cart_checkout_blocks', __FILE__, true );
 } );
+
+add_filter( 'woocommerce_available_payment_gateways', 'disable_hk_payment_for_unsupported_subscriptions' );
+
+
+// The HealthKey data model allows you to cancel a single item from a subscription but we currently have no way to cancel a single item from a WooCommerce subscription. 
+// So we hide the option to way with HealthKey for these unsupported carts -- LH, 2025-03-20 
+function disable_hk_payment_for_unsupported_subscriptions( $available_gateways ) {
+    if ( ! WC()->cart ) return $available_gateways;
+    $supported_cart = True;
+    $subscripton_product_count = 0;
+    foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
+       $product =  wc_get_product( $cart_item['data']->get_id()); 
+       if ( class_exists( 'WC_Subscriptions_Product' ) && WC_Subscriptions_Product::is_subscription( $product )  ) {
+        $subscripton_product_count += 1;
+        if($cart_item['quantity'] != 1) {
+            $supported_cart = False;
+        }
+
+        $has_trial_period   = WC_Subscriptions_Product::get_trial_length( $product ) > 0;
+        if($has_trial_period) {
+            $supported_cart = False;
+        }
+
+        $subscription_length = WC_Subscriptions_Product::get_length($product);
+        if($subscription_length != 0) {
+            $supported_cart = False;
+        }
+
+        $sign_up_fee_due  = WC_Subscriptions_Product::get_sign_up_fee( $product );
+        if($sign_up_fee_due != 0) {
+            $supported_cart = False;
+        }
+
+       }
+    }
+
+    if($subscripton_product_count > 1) {
+        $supported_cart = False;
+    }
+
+
+    if ( !$supported_cart ) {
+       unset( $available_gateways['healthkey_payment'] );
+    }
+    return $available_gateways;
+ }
