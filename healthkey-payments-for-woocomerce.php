@@ -259,7 +259,6 @@ function requestPayment($access_token, $order)
             $subscription_interval = WC_Subscriptions_Product::get_interval($product);
             // $subscription_length = WC_Subscriptions_Product::get_length($product); // We don't currently support subscriptions of a pre-determined length
             $frequency = map_subscription_period_and_interval_to_hk($subscription_period, $subscription_interval);
-            // print_r($frequency);
             $starting_date = date("Y-m-d");
             $productIndex = count($products) - 1;
             $products[$productIndex]["subscription"] = [
