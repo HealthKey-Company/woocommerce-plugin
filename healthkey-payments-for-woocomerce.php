@@ -257,8 +257,8 @@ function requestPayment($access_token, $order)
         if ( class_exists( 'WC_Subscriptions_Product' ) && WC_Subscriptions_Product::is_subscription( $product )  ) {
             $subscription_period = WC_Subscriptions_Product::get_period($product);
             $subscription_interval = WC_Subscriptions_Product::get_interval($product);
-            // $subscription_length = WC_Subscriptions_Product::get_length($product); // We don't currently support subscriptions of a pre-determined length
-            $frequency = map_subscription_period_and_interval_to_hk($subscription_period, $subscription_interval);
+            $subscription_length = WC_Subscriptions_Product::get_length($product);
+            $frequency = map_subscription_period_and_interval_to_hk($subscription_period, $subscription_interval, $subscription_length);
             $starting_date = date("Y-m-d");
             $productIndex = count($products) - 1;
             $products[$productIndex]["subscription"] = [
@@ -266,6 +266,10 @@ function requestPayment($access_token, $order)
                 "frequencyUnit" => $frequency["frequencyUnit"],
                 "startingDate" => $starting_date,
             ];
+
+            if(isset($frequency['finishesAfterNoOfRenewals']) && $frequency['finishesAfterNoOfRenewals'] > 0) {
+                $products[$productIndex]["subscription"]['finishesAfterNoOfRenewals'] = $frequency['finishesAfterNoOfRenewals'];
+            }
         }
 
     }
@@ -296,29 +300,42 @@ function requestPayment($access_token, $order)
     return json_decode($response);
 }
 
-function map_subscription_period_and_interval_to_hk($woo_commerce_subscription_period, $woo_commerce_subscription_interval) {
+function map_subscription_period_and_interval_to_hk($woo_commerce_subscription_period, $woo_commerce_subscription_interval, $subscription_length) {
+
+
+    $subscription_info = null;
     switch($woo_commerce_subscription_period) {
         case "month": 
-            return [
+            $subscription_info = [
                 "frequency" => $woo_commerce_subscription_interval,
                 "frequencyUnit" => "months"
             ];
+            break;
         case "day":
-            return [
+            $subscription_info = [
                 "frequency" => $woo_commerce_subscription_interval,
                 "frequencyUnit" => "days"
             ];
+            break;
         case "year":
-            return [
+            $subscription_info = [
                 "frequency" => $woo_commerce_subscription_interval,
                 "frequencyUnit" => "years"
             ];
+            break;
         case "week":
-            return [
+            $subscription_info = [
                 "frequency" =>  $woo_commerce_subscription_interval * 7,
                 "frequencyUnit" => "days"
             ];
+            break;
     }
+
+    if(isset($subscription_length) && $subscription_length > 0) {
+        $subscription_info['finishesAfterNoOfRenewals'] =  $subscription_length;
+    }
+    
+    return $subscription_info;
 }
 
 /**
@@ -645,11 +662,6 @@ function disable_hk_payment_for_unsupported_subscriptions( $available_gateways )
 
         $has_trial_period   = WC_Subscriptions_Product::get_trial_length( $product ) > 0;
         if($has_trial_period) {
-            $supported_cart = False;
-        }
-
-        $subscription_length = WC_Subscriptions_Product::get_length($product);
-        if($subscription_length != 0) {
             $supported_cart = False;
         }
 
